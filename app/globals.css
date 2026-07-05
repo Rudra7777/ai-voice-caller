@@ -47,3 +47,12 @@ a {
     color-scheme: dark;
   }
 }
+
+.wrap { max-width: 420px; margin: 8vh auto; padding: 0 20px; font-family: system-ui, sans-serif; }
+.wrap h1 { font-size: 2rem; }
+form { display: flex; flex-direction: column; gap: 12px; margin-top: 20px; }
+form > input { padding: 12px; font-size: 1rem; border: 1px solid #ccc; border-radius: 8px; }
+.consent { display: flex; gap: 8px; align-items: flex-start; font-size: .9rem; }
+button { padding: 12px; font-size: 1rem; border: 0; border-radius: 8px; background: #111; color: #fff; }
+button:disabled { opacity: .5; }
+.status { margin-top: 16px; font-weight: 600; }

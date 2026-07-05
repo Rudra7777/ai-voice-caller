@@ -26,7 +26,9 @@ export async function checkGuardrails({ redis }: Deps, { phone, ip, dailyCap }: 
   // All checks passed — record this call.
   const newDaily = await redis.incr(dailyKey)
   if (newDaily === 1) await redis.expire(dailyKey, DAY)
-  await redis.incr(`num:${phone}`); await redis.expire(`num:${phone}`, DAY)
-  await redis.incr(`ip:${ip}`); await redis.expire(`ip:${ip}`, DAY)
+  const numCount = await redis.incr(`num:${phone}`)
+  if (numCount === 1) await redis.expire(`num:${phone}`, DAY)
+  const ipCount = await redis.incr(`ip:${ip}`)
+  if (ipCount === 1) await redis.expire(`ip:${ip}`, DAY)
   return { ok: true }
 }

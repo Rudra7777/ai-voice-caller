@@ -38,4 +38,11 @@ describe('checkGuardrails', () => {
     const r = await checkGuardrails({ redis }, args)
     expect(r).toEqual({ ok: false, error: 'ip_rate_limited' })
   })
+  it('records the call on pass so an immediate repeat is blocked', async () => {
+    const redis = fakeRedis()
+    const first = await checkGuardrails({ redis }, args)
+    expect(first).toEqual({ ok: true })
+    const second = await checkGuardrails({ redis }, args)
+    expect(second).toEqual({ ok: false, error: 'number_rate_limited' })
+  })
 })

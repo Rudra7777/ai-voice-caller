@@ -59,8 +59,10 @@ export default defineAgent({
 
     const session = new voice.AgentSession({
       llm: new google.beta.realtime.RealtimeModel({
-        // Native-audio Live model (supports generateReply for the greeting).
-        model: 'gemini-2.5-flash-native-audio-preview-12-2025',
+        // Vertex AI Live native-audio model (GA). NOTE: this is the *Vertex* id,
+        // not the AI-Studio id (gemini-2.5-flash-native-audio-preview-12-2025).
+        // Supports generateReply for the agent-speaks-first greeting.
+        model: 'gemini-live-2.5-flash-native-audio',
         voice: 'Puck',
         temperature: 0.8,
       }),

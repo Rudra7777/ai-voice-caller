@@ -24,9 +24,11 @@ Rudra has (`vertex-express` service account) and bills to his $300 GCP credits.
   reuse `config/arya-prompt.ts`, `config/mumbai-spots.ts`, and `lib/sheets.ts`.
 - **Hosting:** LiveKit Cloud free tier (media + SIP + 1 agent deployment).
   Frontend stays on Vercel. GCP is used only for Gemini (Vertex) + Sheets.
-- **Gemini model:** `gemini-2.5-flash-native-audio-preview-12-2025` (supports
-  `generateReply()`, needed for the agent-speaks-first greeting; the newer
-  `gemini-3.1-flash-live-preview` does not, so it's a later A/B, not the default).
+- **Gemini model:** `gemini-live-2.5-flash-native-audio` — the **Vertex AI** GA
+  Live native-audio id (the AI-Studio id `gemini-2.5-flash-native-audio-preview-12-2025`
+  is different and does NOT work in Vertex mode). Supports `generateReply()` for
+  the agent-speaks-first greeting. GA in `us-central1`. Verified 2026-07-07 that
+  project `pure-silicon-501615-i9` reaches Vertex Gemini (200 OK, billing active).
 - **Gemini auth:** Vertex via `vertex-express` service account
   (`GOOGLE_GENAI_USE_VERTEXAI=true`, `GOOGLE_CLOUD_PROJECT`,
   `GOOGLE_CLOUD_LOCATION`, `GOOGLE_APPLICATION_CREDENTIALS`).

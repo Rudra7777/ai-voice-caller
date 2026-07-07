@@ -8,16 +8,22 @@
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "agent:dev": "tsx agent/arya.ts dev",
+    "agent": "tsx agent/arya.ts start"
   },
   "dependencies": {
+    "@livekit/agents": "^1.5.0",
+    "@livekit/agents-plugin-google": "^1.5.0",
     "@upstash/ratelimit": "^2.0.8",
     "@upstash/redis": "^1.38.0",
     "googleapis": "^173.0.0",
     "libphonenumber-js": "^1.13.8",
+    "livekit-server-sdk": "^2.16.0",
     "next": "16.2.10",
     "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "react-dom": "19.2.4",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@types/node": "^20",
@@ -26,6 +32,7 @@
     "@vitejs/plugin-react": "^6.0.3",
     "eslint": "^9",
     "eslint-config-next": "16.2.10",
+    "tsx": "^4.23.0",
     "typescript": "^5",
     "vitest": "^4.1.9"
   }

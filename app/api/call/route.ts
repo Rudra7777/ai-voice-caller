@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { Redis } from '@upstash/redis'
 import { validateCallInput } from '@/lib/validation'
 import { checkGuardrails } from '@/lib/guardrails'
-import { triggerCall } from '@/lib/vapi'
+import { dispatchCall, makeDispatchClient } from '@/lib/livekit'
 
 export const runtime = 'nodejs'
 
@@ -23,13 +23,11 @@ export async function POST(req: NextRequest) {
   })
   if (!g.ok) return NextResponse.json({ ok: false, error: g.error }, { status: ERROR_STATUS[g.error] ?? 429 })
 
-  const r = await triggerCall({ fetch, apiKey: process.env.VAPI_API_KEY! }, {
-    assistantId: process.env.VAPI_ASSISTANT_ID!,
-    phoneNumberId: process.env.VAPI_PHONE_NUMBER_ID!,
-    name: v.value.name,
-    phone: v.value.phone,
-  })
+  const r = await dispatchCall(
+    { client: makeDispatchClient(), agentName: process.env.LIVEKIT_AGENT_NAME ?? 'arya' },
+    { name: v.value.name, phone: v.value.phone },
+  )
   if (!r.ok) return NextResponse.json({ ok: false, error: r.error }, { status: 502 })
 
-  return NextResponse.json({ ok: true, callId: r.callId })
+  return NextResponse.json({ ok: true, roomName: r.roomName })
 }

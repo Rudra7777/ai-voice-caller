@@ -65,11 +65,15 @@ export default defineAgent({
         model: 'gemini-live-2.5-flash-native-audio',
         voice: 'Puck',
         temperature: 0.8,
+        // Explicit Vertex config (belt-and-suspenders with the GOOGLE_* env vars).
+        // Credentials come from GOOGLE_APPLICATION_CREDENTIALS (service account).
+        vertexai: true,
+        project: process.env.GOOGLE_CLOUD_PROJECT,
+        location: process.env.GOOGLE_CLOUD_LOCATION ?? 'us-central1',
       }),
     })
 
     await session.start({ agent, room: ctx.room })
-    await ctx.connect()
 
     // Place the outbound call: LiveKit sends an INVITE through the Twilio trunk.
     const sip = new SipClient(
@@ -83,6 +87,9 @@ export default defineAgent({
       roomName,
       { participantIdentity: 'caller', waitUntilAnswered: true },
     )
+    // Wait for the callee's audio before greeting (per LiveKit's outbound
+    // telephony example) so Arya's opening line isn't clipped.
+    await ctx.waitForParticipant('caller')
 
     // Arya speaks first.
     await session.generateReply({

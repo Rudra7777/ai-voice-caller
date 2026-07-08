@@ -1,0 +1,83 @@
+ARYA — RUN & TEST RUNBOOK
+=========================
+Everything you need to run Arya locally and place a real test call to your own
+number. Copy-paste the blocks in order. Lines starting with `#` are notes.
+
+Test target baked in below:  name = "Rudra",  phone = 9766696568  (+91)
+
+
+---------------------------------------------------------------------------
+0) ONE-TIME SETUP  (needs your accounts — see README "Setup")
+---------------------------------------------------------------------------
+# Install dependencies
+npm install
+
+# .env.local must exist and be filled in (it's gitignored). Copy the template
+# then paste your real values. Keys required (see .env.example for the full list):
+#   LiveKit:   LIVEKIT_URL, LIVEKIT_API_KEY, LIVEKIT_API_SECRET,
+#              LIVEKIT_OUTBOUND_TRUNK_ID, LIVEKIT_AGENT_NAME
+#   Vertex:    GOOGLE_GENAI_USE_VERTEXAI=true, GOOGLE_CLOUD_PROJECT,
+#              GOOGLE_CLOUD_LOCATION=us-central1, GOOGLE_APPLICATION_CREDENTIALS
+#   Redis:     UPSTASH_REDIS_REST_URL, UPSTASH_REDIS_REST_TOKEN
+#   Optional:  DAILY_CALL_CAP (default 20)
+
+cp -n .env.example .env.local   # then edit .env.local with real values
+
+# Sanity-check the env file exists (prints the KEY NAMES only, no secrets):
+grep -oE '^[A-Z_]+=' .env.local | tr -d '='
+
+
+---------------------------------------------------------------------------
+1) STATIC CHECKS  (no accounts / network needed — run anytime)
+---------------------------------------------------------------------------
+npx tsc --noEmit     # typecheck
+npm test             # unit tests (pure logic, no network)
+
+
+---------------------------------------------------------------------------
+2) START THE TWO PROCESSES  (each in its OWN terminal, keep both running)
+---------------------------------------------------------------------------
+# --- Terminal A: the agent worker (picks up the job and DIALS the call) ---
+npm run agent:dev
+# Wait until it logs that it's registered/connected to LiveKit before calling.
+
+# --- Terminal B: the Next.js web app (serves POST /api/call + the UI) ---
+npm run dev
+# Serves on http://localhost:3000
+
+
+---------------------------------------------------------------------------
+3) PLACE A TEST CALL  (in a THIRD terminal, with A + B still running)
+---------------------------------------------------------------------------
+# Option A — one-liner curl straight to the API (fastest):
+curl -sS -X POST http://localhost:3000/api/call \
+  -H 'Content-Type: application/json' \
+  -d '{"name":"Rudra","phone":"9766696568","consent":true}'
+# Expected success:  {"ok":true,"roomName":"..."}
+# Your phone should ring within a few seconds; Arya greets you first.
+
+# Option B — through the UI instead:
+#   open http://localhost:3000 , type name + 9766696568 , tick consent , submit.
+
+
+---------------------------------------------------------------------------
+4) WHAT TO WATCH WHILE TESTING
+---------------------------------------------------------------------------
+# - Terminal A (worker) logs the call lifecycle + the lead:  [log_lead] {...}
+# - On a good call: Arya greets by name, asks area/vibe/diet/budget in any order,
+#   gives ~3 real picks, offers more, and hangs up shortly after her goodbye
+#   (she calls end_call). Hard cap is 2 min if she never ends it.
+# - Watch for INVENTED places (no catalog anymore) — note any that don't exist.
+
+
+---------------------------------------------------------------------------
+5) COMMON NON-SUCCESS RESPONSES (from the curl in step 3)
+---------------------------------------------------------------------------
+# {"ok":false,"error":"consent_required"}    -> consent must be true
+# {"ok":false,"error":"invalid_phone"}       -> must be a valid IN mobile (6-9 start)
+# {"ok":false,"error":"number_rate_limited"} -> guardrail: same number too often
+# {"ok":false,"error":"daily_cap"}           -> guardrail: DAILY_CALL_CAP hit today
+# {"ok":false,"error":"killed"}              -> kill switch is on in Redis
+# {"ok":false,"error":"dispatch_failed"} (502) -> LiveKit dispatch/env problem
+# No ring but {"ok":true}                    -> worker (Terminal A) not running / not
+#                                               registered, or SIP trunk misconfigured.

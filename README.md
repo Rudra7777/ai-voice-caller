@@ -1,6 +1,6 @@
 # Arya — AI Voice Concierge for Mumbai 🎙️
 
-Arya is an AI voice agent that **calls you on your phone** and chats in natural Hinglish about where to eat and what to do in Mumbai. Drop your number on a web page, and within seconds Arya rings you, asks a few quick preferences, and gives you 2 hand-picked recommendations.
+Arya is an AI voice agent that **calls you on your phone** and chats in natural Hinglish about where to eat and what to do across the Mumbai metro. Drop your number on a web page, and within seconds Arya rings you, works out what you're after — your area, budget, whatever diet — and recommends real spots, handling follow-ups like *"give me a few more"* or *"something cheaper"* until you're happy.
 
 Built as a portfolio piece to demonstrate production-style voice-AI agents (real-time speech-to-speech, tool calls, telephony, guardrails) — *"I built this for fun; I can build your business its own version."*
 
@@ -13,13 +13,12 @@ Web form ──▶ /api/call ──▶ dispatch agent to a LiveKit room ({name, 
                           Arya worker (agent/arya.ts, LiveKit Cloud)
                             • Gemini Live (speech-to-speech, via Vertex AI)
                             • dials you over the Twilio SIP trunk
-                            • log_lead tool records your preferences
+                            • log_lead records preferences · end_call hangs up
                                        │
                           Twilio SIP ──▶ your +91 mobile
 ```
 
-**The conversation** (~60s hard cap, Arya wraps by ~50s):
-greet by name → *which area?* → *veg or non-veg?* → *budget ₹1000 or ₹2000?* → **2 picks** → "noted!" → bye.
+**The conversation** (~2-min hard cap): Arya greets you by name, figures out your area, your vibe (food or an activity/outing), and any diet or budget — *however you phrase it* ("eggetarian", "10k budget", "somewhere in Navi Mumbai"). She opens with ~3 real recommendations, then offers more or lets you pivot (activity instead of food, cheaper, closer). She's a **pure agent** — no fixed list of places; she recommends real, well-known spots from the model's own knowledge, with anti-hallucination guardrails. When you're done she logs the lead and hangs up.
 
 ## Tech stack
 
@@ -45,10 +44,11 @@ app/
   page.tsx        the "enter your number" form
   api/call/       POST: validate → guardrails → dispatch agent
 config/
-  mumbai-spots.ts  curated ~20-spot catalog (edit freely — you know Mumbai)
-  arya-prompt.ts   Arya's system prompt (embeds the catalog)
+  arya-prompt.ts   Arya's system prompt — a pure agent (no fixed catalog;
+                   recommends real spots from the model's own knowledge,
+                   guarded by anti-hallucination rules). Tune behaviour here.
 agent/
-  arya.ts         the LiveKit agent worker (Gemini Live + SIP + log_lead)
+  arya.ts         the LiveKit agent worker (Gemini Live + SIP + log_lead / end_call)
 ```
 
 ## Setup
@@ -99,7 +99,7 @@ Because a public "auto-dial any number" link is risky:
 - **Consent** checkbox required (rejected server-side otherwise)
 - **1 call per number / 24h**, **3 per IP / 24h**
 - **Daily cap** (`DAILY_CALL_CAP`, default 20)
-- **~60-second** hard call cap (enforced in the agent worker)
+- **~2-minute** hard call cap (enforced in the agent worker; Arya normally ends the call herself via `end_call` when you're done)
 - **Kill switch** — set Redis key `killswitch=on` to instantly disable all calls
 
 ## Cost
@@ -110,4 +110,6 @@ Because a public "auto-dial any number" link is risky:
 
 ## Status
 
-Code migrated to LiveKit + Gemini (Vertex) and committed. Remaining work is account setup + deploy (see Setup), plus re-wiring Google Sheets logging (parked). The `docs/superpowers/` folder has the design docs.
+**Working end-to-end.** As of 2026-07-08 Arya places real calls — LiveKit + Twilio SIP + Gemini Live (Vertex) all wired, worker run locally via `npm run agent:dev`, full Hinglish conversation with real recommendations. See `run.txt` for the exact local run/test commands.
+
+Remaining: deploy the worker to LiveKit Cloud + the web app to Vercel, populate Upstash Redis (guardrails/`/api/call`), upgrade Twilio off trial to reach non-verified numbers, and re-wire Google Sheets logging (parked). The `docs/superpowers/` folder has the design docs.

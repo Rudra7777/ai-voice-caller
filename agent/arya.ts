@@ -20,8 +20,8 @@ import { fileURLToPath } from 'node:url'
 import { z } from 'zod'
 import { buildAryaPrompt } from '../config/arya-prompt'
 
-// Hard cap so a chatty caller can't run up cost (mirrors the old Vapi 60s cap).
-const MAX_CALL_MS = 60_000
+// Hard cap so a chatty caller can't run up cost; ~90s gives room to ask properly.
+const MAX_CALL_MS = 90_000
 
 type CallMeta = { name: string; phone: string }
 
@@ -32,14 +32,24 @@ export default defineAgent({
     const phone = meta.phone
     if (!phone) throw new Error('arya: job metadata missing phone number')
 
+    // Join the dispatched room first; ctx.room.name is only populated after connect.
+    await ctx.connect()
+
     const roomName = ctx.room.name
     if (!roomName) throw new Error('arya: room has no name; cannot place call')
+
+    // Call-ending state: once the flow is logged, hang up after Arya stops
+    // talking so the caller isn't left in dead air (the realtime session goes
+    // idle after the goodbye).
+    let flowDone = false
+    let ended = false
+    let hangTimer: ReturnType<typeof setTimeout> | undefined
 
     // log_lead: Sheets is parked, so just record to the console for now.
     // To re-enable Sheets: import { appendLead, makeSheetsAppender } from
     // '../lib/sheets' and call it here once the GOOGLE_* env vars are set.
     const logLead = llm.tool({
-      description: 'Record the caller preferences and the 2 recommendations given.',
+      description: 'Record the caller preferences and the recommendations given.',
       parameters: z.object({
         area: z.string(),
         foodPref: z.enum(['veg', 'non-veg']).optional(),
@@ -48,6 +58,7 @@ export default defineAgent({
       }),
       execute: async (args) => {
         console.log('[log_lead]', JSON.stringify({ name, phone, ...args }))
+        flowDone = true
         return 'logged'
       },
     })
@@ -63,7 +74,7 @@ export default defineAgent({
         // not the AI-Studio id (gemini-2.5-flash-native-audio-preview-12-2025).
         // Supports generateReply for the agent-speaks-first greeting.
         model: 'gemini-live-2.5-flash-native-audio',
-        voice: 'Puck',
+        voice: 'Leda',
         temperature: 0.8,
         // Explicit Vertex config (belt-and-suspenders with the GOOGLE_* env vars).
         // Credentials come from GOOGLE_APPLICATION_CREDENTIALS (service account).
@@ -109,9 +120,29 @@ export default defineAgent({
         // room already gone / caller hung up
       }
     }
+    // End the call shortly after Arya finishes her closing line. Once the flow
+    // is logged, whenever she stops speaking we arm a hangup; if she starts
+    // talking again the timer is cancelled, so her goodbye is never clipped.
+    session.on(voice.AgentSessionEventTypes.AgentStateChanged, (ev) => {
+      if (ended || !flowDone) return
+      if (ev.newState === 'speaking') {
+        if (hangTimer) {
+          clearTimeout(hangTimer)
+          hangTimer = undefined
+        }
+      } else if (!hangTimer) {
+        hangTimer = setTimeout(() => {
+          ended = true
+          void hangup()
+        }, 1500)
+      }
+    })
+
+    // Fallback hard cap so a stuck call still ends.
     const timer = setTimeout(hangup, MAX_CALL_MS)
     ctx.addShutdownCallback(async () => {
       clearTimeout(timer)
+      if (hangTimer) clearTimeout(hangTimer)
       await hangup()
     })
   },

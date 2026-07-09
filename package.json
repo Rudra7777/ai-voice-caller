@@ -9,7 +9,7 @@
     "lint": "eslint",
     "test": "vitest run",
     "test:watch": "vitest",
-    "agent:dev": "tsx agent/arya.ts dev",
+    "agent:dev": "tsx --env-file=.env.local agent/arya.ts dev",
     "agent": "tsx agent/arya.ts start"
   },
   "dependencies": {

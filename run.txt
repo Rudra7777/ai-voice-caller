@@ -35,29 +35,42 @@ npm test             # unit tests (pure logic, no network)
 
 
 ---------------------------------------------------------------------------
-2) START THE TWO PROCESSES  (each in its OWN terminal, keep both running)
+2) CALL YOURSELF — THE WORKING LOCAL PATH  (two terminals)
 ---------------------------------------------------------------------------
+# Upstash Redis is currently BLANK, so the web route /api/call throws
+# (Redis.fromEnv() → checkGuardrails). Until Redis is populated, dial directly
+# with the scratch _dispatch_once.ts script, which bypasses the web/guardrail
+# layer and calls dispatchCall() the same way the route would.
+
 # --- Terminal A: the agent worker (picks up the job and DIALS the call) ---
 npm run agent:dev
-# Wait until it logs that it's registered/connected to LiveKit before calling.
+# Wait until it logs that it's registered/connected to LiveKit before dialing.
 
+# --- Terminal B: fire ONE outbound call to yourself ---
+# Defaults to name="there", phone=+919766696568 (Rudra). Override via env.
+CALL_NAME=Rudra CALL_PHONE=+919766696568 \
+  npx tsx --env-file=.env.local _dispatch_once.ts
+# Expected:  dialing: +919766696568   ...   DISPATCH_RESULT: {"ok":true,...}
+# Your phone rings within a few seconds; Arya greets you first.
+# NOTE: Twilio is a TRIAL account — the number MUST be a verified caller ID
+# (Twilio console → Phone Numbers → Verified Caller IDs) or the SIP INVITE is
+# rejected (sip status 400: 32100) and the phone never rings.
+
+
+---------------------------------------------------------------------------
+3) ALTERNATIVE — VIA THE WEB ROUTE  (only after Upstash Redis is populated)
+---------------------------------------------------------------------------
+# Once UPSTASH_REDIS_REST_URL + _TOKEN are set in .env.local, you can use the
+# full route (guardrails + validation). Worker (Terminal A) must be running.
 # --- Terminal B: the Next.js web app (serves POST /api/call + the UI) ---
-npm run dev
-# Serves on http://localhost:3000
-
-
----------------------------------------------------------------------------
-3) PLACE A TEST CALL  (in a THIRD terminal, with A + B still running)
----------------------------------------------------------------------------
-# Option A — one-liner curl straight to the API (fastest):
+npm run dev            # http://localhost:3000
+# --- Terminal C: one-liner curl straight to the API ---
 curl -sS -X POST http://localhost:3000/api/call \
   -H 'Content-Type: application/json' \
   -d '{"name":"Rudra","phone":"9766696568","consent":true}'
 # Expected success:  {"ok":true,"roomName":"..."}
-# Your phone should ring within a few seconds; Arya greets you first.
-
-# Option B — through the UI instead:
-#   open http://localhost:3000 , type name + 9766696568 , tick consent , submit.
+# Or through the UI: open http://localhost:3000 , enter name + 9766696568 ,
+# tick consent , submit.
 
 
 ---------------------------------------------------------------------------

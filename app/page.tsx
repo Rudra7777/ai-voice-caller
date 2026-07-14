@@ -1,39 +1,70 @@
 'use client'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import type { Order } from '@/lib/orders'
 
-export default function Home() {
-  const [name, setName] = useState('')
-  const [phone, setPhone] = useState('')
-  const [consent, setConsent] = useState(false)
-  const [status, setStatus] = useState<string | null>(null)
-  const [loading, setLoading] = useState(false)
+const POLL_MS = 5000
 
-  async function submit(e: React.FormEvent) {
-    e.preventDefault()
-    setLoading(true); setStatus(null)
-    const res = await fetch('/api/call', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, phone, consent }),
-    })
-    const data = await res.json()
-    setLoading(false)
-    setStatus(data.ok ? '📞 Arya is calling you now — pick up!' : `Couldn’t call: ${data.error}`)
-  }
+export default function Kitchen() {
+  const [orders, setOrders] = useState<Order[]>([])
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    let live = true
+    async function load() {
+      try {
+        const res = await fetch('/api/orders')
+        const data = await res.json()
+        if (!live) return
+        if (data.ok) {
+          setOrders(data.orders)
+          setError(null)
+        } else {
+          setError(data.error)
+        }
+      } catch {
+        if (live) setError('offline')
+      }
+    }
+    load()
+    const t = setInterval(load, POLL_MS)
+    return () => {
+      live = false
+      clearInterval(t)
+    }
+  }, [])
 
   return (
     <main className="wrap">
-      <h1>Talk to Arya 🎙️</h1>
-      <p>Your Mumbai food & fun plug. Drop your number and Arya will call you.</p>
-      <form onSubmit={submit}>
-        <input placeholder="Your name" value={name} onChange={e => setName(e.target.value)} required />
-        <input placeholder="Indian mobile (e.g. 98200 98200)" value={phone} onChange={e => setPhone(e.target.value)} required />
-        <label className="consent">
-          <input type="checkbox" checked={consent} onChange={e => setConsent(e.target.checked)} />
-          I agree to receive a one-time demo call on this number.
-        </label>
-        <button disabled={loading || !consent}>{loading ? 'Calling…' : 'Call me'}</button>
-      </form>
-      {status && <p className="status">{status}</p>}
+      <h1>Gattu&apos;s Chinese — Kitchen 🍜</h1>
+      <p>Orders Arya takes on the phone land here. Refreshes every 5 seconds.</p>
+      {error && <p className="status">Couldn&apos;t load orders: {error}</p>}
+      {!error && orders.length === 0 && <p className="status">No orders yet.</p>}
+      <ul className="orders">
+        {orders.map((o) => (
+          <li key={o.id} className={o.status === 'needs_human' ? 'order needs-human' : 'order'}>
+            <header>
+              <strong>{o.customerName || 'Unknown'}</strong>
+              <span className="type">{o.type}</span>
+              <time>{new Date(o.ts).toLocaleTimeString()}</time>
+            </header>
+            {o.status === 'needs_human' && <p className="flag">⚠️ Call this customer back</p>}
+            <ul className="items">
+              {o.items.map((i, n) => (
+                <li key={n}>
+                  {i.qty} × {i.name} <em>({i.size})</em> — ₹{i.price * i.qty}
+                  {i.note && <span className="note"> · {i.note}</span>}
+                </li>
+              ))}
+            </ul>
+            {o.note && <p className="note">{o.note}</p>}
+            {o.address && <p className="address">📍 {o.address}</p>}
+            <footer>
+              <span className="phone">{o.phone}</span>
+              <strong className="total">₹{o.total}</strong>
+            </footer>
+          </li>
+        ))}
+      </ul>
     </main>
   )
 }

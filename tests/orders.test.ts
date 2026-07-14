@@ -1,5 +1,8 @@
 import { describe, it, expect, vi } from 'vitest'
-import { buildOrder, type OrderInput } from '../lib/orders'
+import {
+  buildOrder, saveOrder, listOrders, ORDERS_KEY,
+  type Order, type OrderInput, type RedisLike,
+} from '../lib/orders'
 import type { MenuItem } from '../lib/menu'
 
 const menu: MenuItem[] = [
@@ -96,5 +99,63 @@ describe('buildOrder', () => {
   it('keeps a per-item note (e.g. spice level)', () => {
     const r = buildOrder(menu, { ...base, items: [{ id: 'veg-hakka-noodles', size: 'full', qty: 1, note: 'extra spicy' }] }, now, id)
     expect(r.ok && r.order.items[0].note).toBe('extra spicy')
+  })
+})
+
+function fakeRedis(seed: string[] = []) {
+  const list = [...seed]
+  const redis: RedisLike = {
+    lpush: async (_key, value) => list.unshift(value),
+    lrange: async (_key, start, stop) => list.slice(start, stop + 1),
+  }
+  return { redis, list }
+}
+
+const order: Order = {
+  id: 'order-1', ts: '2026-07-15T18:30:00.000Z', customerName: 'Rohan',
+  phone: '+919820098200', type: 'pickup',
+  items: [{ id: 'veg-hakka-noodles', name: 'Veg Hakka Noodles', size: 'full', qty: 2, price: 190 }],
+  total: 380, status: 'new',
+}
+
+describe('saveOrder', () => {
+  it('pushes the order onto the orders list as JSON', async () => {
+    const { redis, list } = fakeRedis()
+    await saveOrder({ redis }, order)
+    expect(list).toHaveLength(1)
+    expect(JSON.parse(list[0])).toEqual(order)
+  })
+})
+
+describe('listOrders', () => {
+  it('returns saved orders, newest first', async () => {
+    const { redis } = fakeRedis()
+    await saveOrder({ redis }, order)
+    await saveOrder({ redis }, { ...order, id: 'order-2' })
+    const orders = await listOrders({ redis })
+    expect(orders.map((o) => o.id)).toEqual(['order-2', 'order-1'])
+    expect(orders[1]).toEqual(order)
+  })
+
+  it('handles a client that already deserialized the JSON (Upstash does this)', async () => {
+    const redis: RedisLike = {
+      lpush: async () => 1,
+      lrange: async () => [order as unknown as string],
+    }
+    const orders = await listOrders({ redis })
+    expect(orders).toEqual([order])
+  })
+
+  it('skips entries it cannot parse rather than failing the whole dashboard', async () => {
+    const { redis } = fakeRedis(['not json at all'])
+    await saveOrder({ redis }, order)
+    const orders = await listOrders({ redis })
+    expect(orders).toEqual([order])
+  })
+
+  it('reads from the orders key', async () => {
+    const lrange = vi.fn().mockResolvedValue([])
+    await listOrders({ redis: { lpush: async () => 1, lrange } }, 10)
+    expect(lrange).toHaveBeenCalledWith(ORDERS_KEY, 0, 9)
   })
 })

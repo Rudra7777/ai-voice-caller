@@ -87,3 +87,44 @@ export function buildOrder(
     },
   }
 }
+
+// --- persistence -----------------------------------------------------------
+// Minimal surface we need from @upstash/redis, so tests inject a fake and no
+// network runs (same pattern as the rest of lib/).
+export type RedisLike = {
+  lpush: (key: string, value: string) => Promise<number>
+  lrange: (key: string, start: number, stop: number) => Promise<unknown[]>
+}
+
+export type OrderDeps = { redis: RedisLike }
+
+export const ORDERS_KEY = 'orders'
+
+export async function saveOrder(deps: OrderDeps, order: Order): Promise<void> {
+  await deps.redis.lpush(ORDERS_KEY, JSON.stringify(order))
+}
+
+export async function listOrders(deps: OrderDeps, limit = 50): Promise<Order[]> {
+  const rows = await deps.redis.lrange(ORDERS_KEY, 0, limit - 1)
+  const orders: Order[] = []
+  for (const row of rows) {
+    // Upstash deserializes JSON automatically; a plain client hands back strings.
+    if (typeof row === 'string') {
+      try {
+        orders.push(JSON.parse(row) as Order)
+      } catch {
+        // A corrupt row shouldn't take down the kitchen's dashboard.
+      }
+    } else if (row && typeof row === 'object') {
+      orders.push(row as Order)
+    }
+  }
+  return orders
+}
+
+// Real client factory (not exercised in unit tests).
+export function makeRedis(): RedisLike {
+  // Imported lazily so the test path never needs the SDK or its env vars.
+  const { Redis } = require('@upstash/redis')
+  return Redis.fromEnv() as RedisLike
+}

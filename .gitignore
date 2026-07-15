@@ -47,3 +47,6 @@ next-env.d.ts
 
 # scratch (agent workspace, not part of the app)
 .superpowers/
+
+# large media (demo recordings — keep out of git)
+*.mp4

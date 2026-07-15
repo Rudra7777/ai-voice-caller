@@ -33,12 +33,15 @@ Customer's phone ──▶ Exotel DID ──▶ Exotel vSIP trunk
                      Kitchen dashboard (/) polls GET /api/orders
 ```
 
-**The conversation** (5-min hard cap): Arya answers, takes the order, asks
-"half ya full?" where a dish has both, asks pickup or delivery (reading a
-delivery address back to confirm it), then **reads the whole order back with the
-total** and only saves it once the customer says yes. If she genuinely can't
-handle the call, she promises a callback and files a `needs_human` record
-instead of losing the customer.
+**The conversation** (5-min hard cap): the agent answers as the restaurant,
+takes the order, asks "half ya full?" only when the caller *hasn't* already said
+a size, and for delivery it checks the address is in a served area (Vile Parle
+W/E, Andheri W, Santacruz W, Juhu — else it offers pickup) and collects a
+**complete** address (flat no. + building + landmark). Then it **reads the whole
+order back with the total** and only saves once the customer confirms. If it
+genuinely can't handle the call, it promises a callback and files a
+`needs_human` record instead of losing the customer. Voice is a warm male
+preset (`Puck`).
 
 ## Tech stack
 
@@ -108,24 +111,30 @@ answers calls and writes orders; the Next.js app reads them back.
 (w.e.f. 20.04.2026). Half plates apply to Noodles, Rice and Side Dishes; their
 prices aren't printed on the menu, so they're derived from the restaurant's
 convention (`halfPrice` in `lib/menu.ts`: a bit over half the full price, rounded
-up to the next ₹10). Edit the menu there and Arya's knowledge changes with it.
+up to the next ₹10). Half plates cover Noodles/Rice/Side Dishes plus Chicken
+Lollypop (a Starter exception). Edit the menu there and the agent's knowledge
+changes with it.
 
-Correctness rule: Arya reports *what* was ordered; `buildOrder` decides what it
-*costs*, recomputing the total from these prices. The model's arithmetic is never
-trusted, and an off-menu dish is rejected before it reaches the kitchen.
+Correctness rule: the agent reports *what* was ordered; `buildOrder` decides what
+it *costs*, recomputing the total from these prices. The model's arithmetic is
+never trusted, and an off-menu dish is rejected before it reaches the kitchen.
 
 ## Cost
 
-- **LiveKit Cloud** → free tier covers media + SIP + 1 agent deployment at demo scale.
-- **Gemini Live** → billed to Vertex on GCP credits.
-- **Exotel** → per-minute inbound + DID rental (see Exotel's India pricing).
+- **LiveKit Cloud** → free tier (~1,000 agent-min/mo) covers media + inbound at demo scale; the demo number is ~$1/mo.
+- **Gemini Live** → billed to Vertex on GCP credits (~$0.11/3-min call).
+- **The caller's phone** → dialing the US demo number from India is an ISD call (~₹8–15/min) on your own carrier — the one cost not in any dashboard.
 
 ## Status
 
-The voice stack (LiveKit + Gemini Live via Vertex) is proven — it placed real
-Hinglish calls end-to-end on 2026-07-08 under the previous outbound design.
+**Verified working end-to-end (2026-07-15):** a real inbound Hinglish call to the
+LiveKit Phone Number (**+1 484 207 9261**) was answered by the agent, the order
+was taken and priced server-side, and it saved to Upstash Redis and appeared on
+the dashboard.
 
-Remaining: provision **Exotel** (DID + vSIP → LiveKit inbound trunk + dispatch
-rule) — nothing rings until this is done; populate **Upstash Redis** (now
-required); deploy the worker to LiveKit Cloud and the dashboard to Vercel. The
-`docs/superpowers/` folder has the design docs and the implementation plan.
+Remaining: **deploy the worker to LiveKit Cloud** (currently run locally with
+`npm run agent:dev`, which drops when the laptop sleeps or WiFi wobbles — this is
+the main reliability fix); **Vercel deploy** of the dashboard; optionally an
+**Exotel** Indian DID for a real restaurant (needs business KYC —
+`docs/exotel-setup.md`). The `docs/superpowers/` folder has the design docs and
+implementation plan.

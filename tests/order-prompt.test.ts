@@ -31,6 +31,17 @@ describe('buildOrderPrompt', () => {
     expect(prompt.toLowerCase()).toContain('address')
   })
 
+  it('lists the delivery areas so the agent can decline out-of-zone addresses', () => {
+    for (const area of RESTAURANT.deliveryAreas) {
+      expect(prompt).toContain(area)
+    }
+  })
+
+  it('tells the agent to capture a complete address (flat number, landmark)', () => {
+    expect(prompt.toLowerCase()).toContain('flat')
+    expect(prompt.toLowerCase()).toContain('landmark')
+  })
+
   it('forbids inventing dishes and prices', () => {
     expect(prompt).toContain('NEVER')
     expect(prompt.toLowerCase()).toContain('not on the menu')

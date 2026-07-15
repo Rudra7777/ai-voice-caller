@@ -13,7 +13,7 @@ const soup: MenuItem = {
   category: 'Soup', sizes: { full: 120 }, tags: [],
 }
 const menu = [noodles, soup]
-const restaurant: Restaurant = { name: "Gattu's Chinese", readyEstimateMins: 20 }
+const restaurant: Restaurant = { name: "Gattu's Chinese", readyEstimateMins: 20, deliveryAreas: ['Vile Parle West'] }
 
 describe('halfPrice', () => {
   it("matches the owner's stated examples", () => {

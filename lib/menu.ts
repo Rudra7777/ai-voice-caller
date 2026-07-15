@@ -12,7 +12,7 @@ export type MenuItem = {
   tags: Tag[]
 }
 
-export type Restaurant = { name: string; readyEstimateMins: number }
+export type Restaurant = { name: string; readyEstimateMins: number; deliveryAreas: string[] }
 
 // Gattu's half-plate convention: a bit over half the full price, rounded up to
 // the next ₹10 (owner's examples: 280→150, 300→160, 270→140).

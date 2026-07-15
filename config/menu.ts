@@ -10,6 +10,14 @@ import { halfPrice, type Category, type MenuItem, type Restaurant, type Tag } fr
 export const RESTAURANT: Restaurant = {
   name: "Gattu's Chinese",
   readyEstimateMins: 20,
+  // The only areas the kitchen delivers to; anything else is pickup-only.
+  deliveryAreas: [
+    'Vile Parle West',
+    'Vile Parle East',
+    'Andheri West',
+    'Santacruz West',
+    'Juhu',
+  ],
 }
 
 const HALF_CATEGORIES: Category[] = ['Noodles', 'Rice', 'Side Dish']

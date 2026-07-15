@@ -27,12 +27,18 @@ describe("Gattu's menu data", () => {
     }
   })
 
-  it('serves Soups and Starters full-only', () => {
+  it('serves Soups and Starters full-only, except Chicken Lollypop', () => {
     for (const item of MENU) {
-      if (['Soup', 'Starter'].includes(item.category)) {
+      if (['Soup', 'Starter'].includes(item.category) && item.id !== 'chicken-lollypop') {
         expect(item.sizes.half).toBeUndefined()
       }
     }
+  })
+
+  it('serves Chicken Lollypop as a half plate too', () => {
+    const lollypop = findMenuItem(MENU, 'chicken-lollypop')!
+    expect(lollypop.sizes.half).toBe(halfPrice(lollypop.sizes.full))
+    expect(lollypop.sizes.half).toBe(110) // full 200 → half 110
   })
 
   it('carries the real prices from the printed menu', () => {

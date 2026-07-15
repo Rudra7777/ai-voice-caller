@@ -14,15 +14,18 @@ export const RESTAURANT: Restaurant = {
 
 const HALF_CATEGORIES: Category[] = ['Noodles', 'Rice', 'Side Dish']
 
+// Starters and Soups are single-portion — EXCEPT Chicken Lollypop, the one
+// Starter the kitchen also serves as a half plate (4 pcs).
+const HALF_EXCEPTIONS = new Set(['chicken-lollypop'])
+
 function item(
   id: string, name: string, full: number, veg: boolean,
   category: Category, tags: Tag[] = [],
 ): MenuItem {
+  const hasHalf = HALF_CATEGORIES.includes(category) || HALF_EXCEPTIONS.has(id)
   return {
     id, name, veg, category, tags,
-    sizes: HALF_CATEGORIES.includes(category)
-      ? { full, half: halfPrice(full) }
-      : { full },
+    sizes: hasHalf ? { full, half: halfPrice(full) } : { full },
   }
 }
 

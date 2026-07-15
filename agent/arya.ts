@@ -111,7 +111,9 @@ export default defineAgent({
         // Vertex REST metadata endpoint (200) but the Live bidi WebSocket rejects
         // it with code 1008 (verified by a real call 2026-07-08). Not usable yet.
         model: 'gemini-live-2.5-flash-native-audio',
-        voice: 'Sulafat',
+        // Male voice, upbeat/warm — suits a busy-but-friendly order-taker.
+        // Other male options: 'Charon' (calmer/deeper), 'Orus' (firm).
+        voice: 'Puck',
         temperature: 0.8,
         vertexai: true,
         project: process.env.GOOGLE_CLOUD_PROJECT,

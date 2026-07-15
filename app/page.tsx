@@ -36,7 +36,7 @@ export default function Kitchen() {
   return (
     <main className="wrap">
       <h1>Gattu&apos;s Chinese — Kitchen 🍜</h1>
-      <p>Orders Arya takes on the phone land here. Refreshes every 5 seconds.</p>
+      <p>Orders the agent takes on the phone land here. Refreshes every 5 seconds.</p>
       {error && <p className="status">Couldn&apos;t load orders: {error}</p>}
       {!error && orders.length === 0 && <p className="status">No orders yet.</p>}
       <ul className="orders">

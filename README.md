@@ -42,9 +42,9 @@ instead of losing the customer.
 
 ## Tech stack
 
-- **[LiveKit](https://livekit.io) Agents (Node)** — real-time media + agent orchestration + inbound SIP
+- **[LiveKit](https://livekit.io) Agents (Node)** — real-time media + agent orchestration + inbound telephony
 - **Google Gemini Live** — speech-to-speech brain (via **Vertex AI**, chosen for Hinglish code-switching + low latency)
-- **Exotel** — India-compliant inbound telephony (an owned Indian DID → LiveKit SIP trunk)
+- **Inbound number** — **LiveKit Phone Numbers** (first-party US number, no SIP trunk) for the demo; **Exotel** (Indian DID → LiveKit SIP trunk) for a real Indian restaurant
 - **Next.js 16** (App Router, TypeScript) on **Vercel** — the kitchen dashboard + `/api/orders`
 - **Upstash Redis** — order storage
 - **Vitest** — unit tests
@@ -74,14 +74,13 @@ agent/
 ## Setup
 
 Copy `.env.example` to `.env.local` and fill it in (never commit `.env.local`).
-**Nothing rings until Exotel is provisioned** — it's on the critical path.
 
 ### 1. Accounts & credentials
 
 | Service | What you need |
 |---|---|
 | **LiveKit Cloud** | free-tier project → `LIVEKIT_URL`, API key, API secret |
-| **Exotel** | an Indian DID + a **vSIP trunk**, pointed at a LiveKit **inbound** SIP trunk; then a LiveKit **dispatch rule** routing that trunk's calls to the agent named `LIVEKIT_AGENT_NAME`. (Indian mobile DIDs can't be owned via a US carrier — TRAI — so Exotel is the compliant path.) |
+| **A phone number** | for the demo, **LiveKit Phone Numbers** — a US number bought inside the LiveKit console, no SIP trunk, no KYC (see [`docs/phone-setup.md`](docs/phone-setup.md)). For a real Indian restaurant, an Exotel Indian DID (see [`docs/exotel-setup.md`](docs/exotel-setup.md)). |
 | **Google Cloud** | project with billing; enable **Vertex AI API**; a **service account** with Vertex access → download its JSON key |
 | **Upstash** | a free Redis DB (REST URL + token) — **required**; orders live here |
 
@@ -94,9 +93,9 @@ npm run agent:dev # the LiveKit agent worker (needs LiveKit + Vertex + Redis env
 npm run dev       # http://localhost:3000 — the kitchen dashboard
 ```
 
-Then **call the Exotel number** from a phone. The dashboard and the worker are
-two processes: the worker answers calls and writes orders; the Next.js app reads
-them back.
+Then buy a number and point it at agent `arya` ([`docs/phone-setup.md`](docs/phone-setup.md)),
+and **call it**. The dashboard and the worker are two processes: the worker
+answers calls and writes orders; the Next.js app reads them back.
 
 ### 3. Deploy
 

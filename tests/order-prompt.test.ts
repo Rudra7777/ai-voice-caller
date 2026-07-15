@@ -42,6 +42,22 @@ describe('buildOrderPrompt', () => {
     expect(prompt.toLowerCase()).toContain('landmark')
   })
 
+  it('teaches the bestsellers per category so recommendations have depth', () => {
+    expect(prompt).toContain('BESTSELLERS')
+    expect(prompt).toContain("Gattu's Special Rice")
+    expect(prompt).toContain('Chicken Spring Roll')
+    expect(prompt).toContain('Paneer Chilly Sauce')
+  })
+
+  it('states the delivery charge so it reaches the quoted total', () => {
+    expect(prompt).toContain(`₹${RESTAURANT.deliveryFee}`)
+    expect(prompt.toLowerCase()).toContain('delivery charge')
+  })
+
+  it('requires asking the customer name before saving', () => {
+    expect(prompt.toLowerCase()).toContain('naam')
+  })
+
   it('forbids inventing dishes and prices', () => {
     expect(prompt).toContain('NEVER')
     expect(prompt.toLowerCase()).toContain('not on the menu')

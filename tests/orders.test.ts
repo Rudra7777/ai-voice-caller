@@ -81,6 +81,15 @@ describe('buildOrder', () => {
     expect(r).toEqual({ ok: false, error: 'address_required' })
   })
 
+  it('adds the delivery fee to the total on delivery orders only', () => {
+    const delivery = buildOrder(menu, { ...base, type: 'delivery', address: '12 Hill Road, Bandra West' }, now, id, 30)
+    expect(delivery.ok && delivery.order.total).toBe(410)
+    expect(delivery.ok && delivery.order.deliveryFee).toBe(30)
+    const pickup = buildOrder(menu, base, now, id, 30)
+    expect(pickup.ok && pickup.order.total).toBe(380)
+    expect(pickup.ok && pickup.order.deliveryFee).toBeUndefined()
+  })
+
   it('drops the address on a pickup order', () => {
     const r = buildOrder(menu, { ...base, address: '12 Hill Road' }, now, id)
     expect(r.ok && r.order.address).toBeUndefined()

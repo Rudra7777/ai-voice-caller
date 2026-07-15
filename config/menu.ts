@@ -18,6 +18,8 @@ export const RESTAURANT: Restaurant = {
     'Santacruz West',
     'Juhu',
   ],
+  // Flat charge added server-side to every delivery order's total.
+  deliveryFee: 30,
 }
 
 const HALF_CATEGORIES: Category[] = ['Noodles', 'Rice', 'Side Dish']
@@ -68,7 +70,7 @@ export const MENU: MenuItem[] = [
   item('paneer-crispy', 'Paneer Crispy', 300, true, 'Starter', ['popular']),
 
   // ---- CHICKEN STARTER ----
-  item('chicken-spring-roll', 'Chicken Spring Roll', 200, false, 'Starter', ['popular']),
+  item('chicken-spring-roll', 'Chicken Spring Roll', 200, false, 'Starter', ['bestseller']),
   item('chicken-finger', 'Chicken Finger', 200, false, 'Starter'),
   item('chicken-lollypop', 'Chicken Lollypop (8 pcs)', 200, false, 'Starter', ['bestseller']),
   item('chicken-bhel', 'Chicken Bhel', 200, false, 'Starter'),
@@ -118,7 +120,7 @@ export const MENU: MenuItem[] = [
   item('veg-ginger-rice', 'Veg Ginger Rice', 200, true, 'Rice'),
   item('veg-stewed-rice', 'Veg Stewed Rice', 200, true, 'Rice'),
   item('veg-tripal-szechwan-rice', 'Veg Tripal Szechwan Rice', 260, true, 'Rice', ['spicy']),
-  item('gattus-special-rice-veg', "Gattu's Special Rice (veg)", 260, true, 'Rice', ['chef-special']),
+  item('gattus-special-rice-veg', "Gattu's Special Rice (veg)", 260, true, 'Rice', ['chef-special', 'bestseller']),
   item('veg-lakhpati-rice', 'Veg Lakhpati Rice', 260, true, 'Rice'),
   item('veg-manchurian-rice', 'Veg Manchurian Rice', 260, true, 'Rice', ['bestseller']),
   item('paneer-special-rice', 'Paneer Special Rice', 320, true, 'Rice'),
@@ -136,7 +138,7 @@ export const MENU: MenuItem[] = [
   item('chicken-ginger-rice', 'Chicken Ginger Rice', 220, false, 'Rice'),
   item('chicken-stewed-rice', 'Chicken Stewed Rice', 290, false, 'Rice'),
   item('chicken-tripal-szechwan-rice', 'Chicken Tripal Szechwan Rice', 300, false, 'Rice', ['spicy']),
-  item('gattus-special-rice-chicken', "Gattu's Special Rice (chicken)", 300, false, 'Rice', ['chef-special']),
+  item('gattus-special-rice-chicken', "Gattu's Special Rice (chicken)", 300, false, 'Rice', ['chef-special', 'bestseller']),
   item('chicken-lakhpati-rice', 'Chicken Lakhpati Rice', 300, false, 'Rice'),
   item('chicken-manchurian-rice', 'Chicken Manchurian Rice', 300, false, 'Rice', ['bestseller']),
   item('chicken-sz-lakhpati-rice', 'Chicken Szechwan Lakhpati Rice', 320, false, 'Rice', ['spicy']),
@@ -156,7 +158,7 @@ export const MENU: MenuItem[] = [
   item('gattus-special-veg', "Gattu's Special Veg", 220, true, 'Side Dish', ['chef-special']),
   item('veg-lakhpati', 'Veg Lakhpati', 220, true, 'Side Dish'),
   item('paneer-manchurian', 'Paneer Manchurian', 290, true, 'Side Dish', ['bestseller']),
-  item('paneer-chilly-sauce', 'Paneer Chilly Sauce', 290, true, 'Side Dish', ['spicy', 'popular']),
+  item('paneer-chilly-sauce', 'Paneer Chilly Sauce', 290, true, 'Side Dish', ['spicy', 'bestseller']),
   item('paneer-szechwan-sauce', 'Paneer Szechwan Sauce', 290, true, 'Side Dish', ['spicy']),
   item('paneer-garlic-sauce', 'Paneer Garlic Sauce', 290, true, 'Side Dish'),
   item('paneer-mangolian', 'Paneer Mangolian', 300, true, 'Side Dish'),

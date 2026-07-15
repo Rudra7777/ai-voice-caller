@@ -30,6 +30,7 @@ export type Order = {
   type: OrderType
   address?: string
   items: OrderItem[]
+  deliveryFee?: number
   total: number
   status: OrderStatus
   note?: string
@@ -38,7 +39,7 @@ export type Order = {
 export type BuildResult = { ok: true; order: Order } | { ok: false; error: string }
 
 export function buildOrder(
-  menu: MenuItem[], input: OrderInput, now: Date, id: string,
+  menu: MenuItem[], input: OrderInput, now: Date, id: string, deliveryFee = 0,
 ): BuildResult {
   const status: OrderStatus = input.status ?? 'new'
 
@@ -69,7 +70,8 @@ export function buildOrder(
     })
   }
 
-  const total = items.reduce((sum, i) => sum + i.price * i.qty, 0)
+  const fee = input.type === 'delivery' ? deliveryFee : 0
+  const total = items.reduce((sum, i) => sum + i.price * i.qty, 0) + fee
 
   return {
     ok: true,
@@ -81,6 +83,7 @@ export function buildOrder(
       type: input.type,
       ...(input.type === 'delivery' && input.address ? { address: input.address } : {}),
       items,
+      ...(fee ? { deliveryFee: fee } : {}),
       total,
       status,
       ...(input.note ? { note: input.note } : {}),

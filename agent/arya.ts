@@ -74,7 +74,7 @@ export default defineAgent({
         note: z.string().optional().describe('Why this needs a human, if it does.'),
       }),
       execute: async (args) => {
-        const result = buildOrder(MENU, { ...args, phone }, new Date(), randomUUID())
+        const result = buildOrder(MENU, { ...args, phone }, new Date(), randomUUID(), RESTAURANT.deliveryFee)
         if (!result.ok) {
           // Tell the model what went wrong so it can fix it with the customer
           // instead of silently losing the order.

@@ -55,6 +55,7 @@ export default function Kitchen() {
                   {i.note && <span className="note"> · {i.note}</span>}
                 </li>
               ))}
+              {o.deliveryFee ? <li>Delivery charge — ₹{o.deliveryFee}</li> : null}
             </ul>
             {o.note && <p className="note">{o.note}</p>}
             {o.address && <p className="address">📍 {o.address}</p>}
